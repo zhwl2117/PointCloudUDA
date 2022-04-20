@@ -1,5 +1,4 @@
 import tensorflow as tf
-tf.enable_eager_execution()
 import numpy as np
 import pandas as pd
 import os
@@ -26,9 +25,9 @@ def read_tf(tfrecord_path):
     parsed_image_dataset = raw_image_dataset.map(_parse_image_function)
 
     for parser in parsed_image_dataset:
-        data_vol = tf.decode_raw(parser['data_vol'], tf.float32)
+        data_vol = tf.io.decode_raw(parser['data_vol'], tf.float32)
 
-        label_vol = tf.decode_raw(parser['label_vol'], tf.float32)
+        label_vol = tf.io.decode_raw(parser['label_vol'], tf.float32)
 
         image_raw1 = data_vol.numpy()
         image_raw2 = label_vol.numpy()
@@ -43,8 +42,13 @@ def tf_to_numpy(tf_path='../../input/'):
     :return:
     """
     for data_name in ["ct_train", "ct_val", "mr_train", "mr_val"]:
-        df_train = pd.read_csv(os.path.join(tf_path, '{}_list.csv'.format(data_name)))
-        ids_train = df_train['img']
+        df_train_path = os.path.join(tf_path, 'PnpAda_release_data/train_val', f'{data_name}_list')
+        with open(df_train_path, 'r') as f:
+            lines = f.readlines()
+        if "train" in data_name:
+            ids_train = [line[27:-11] for line in lines]
+        else:
+            ids_train = [line[23:-11] for line in lines]
         folder_tosave = os.path.join(tf_path, 'PnpAda_release_data/{}/'.format(data_name))
         if not os.path.exists(folder_tosave):
             os.mkdir(folder_tosave)
@@ -56,36 +60,27 @@ def tf_to_numpy(tf_path='../../input/'):
             if i % 100 == 0:
                 print(id)
             if not os.path.exists(os.path.join(folder_tosave, 'img', id)):
-                img_path = '../../input/PnpAda_release_data/train_n_val/{}_tfs/{}'.format(data_name, id)
+                img_path = tf_path + '/PnpAda_release_data/train_val/{}_tfs/{}_slice{}.tfrecords'.format(data_name, data_name, id)
                 img, mask = read_tf(img_path)
                 np.save(os.path.join(folder_tosave, 'img', id), img)
                 np.save(os.path.join(folder_tosave, 'mask', id), mask)
         print('**************** {} finished ****************'.format(data_name))
 
 if __name__ == '__main__':
-    # tf_to_numpy()
-    # print("################ all the processes finished ################")
-    img, mask = read_tf('../../input/PnpAda_release_data/train_n_val/ct_train_tfs/ct_train_slice{}.tfrecords'.format(0))
-    print(img.shape, mask.shape)
-    print(np.mean(img), np.std(img))
-    print(img.min(), img.max())
-    img2 = (img - img.min()) * 255 / (img.max() - img.min())
-    img2 = np.array(img2, dtype=int)
-    print(img2.min(), img2.max())
-    from matplotlib import pyplot as plt
-    plt.imshow(img2[128-112:128+112,128-112:128+112], cmap='gray')
-    plt.show()
-    plt.imshow(mask[128-112:128+112,128-112:128+112,0], cmap='gray')
-    plt.show()
+    tf_to_numpy('./data')
+    print("################ all the processes finished ################")
+    # img, mask = read_tf('./data/PnpAda_release_data/train_val/ct_train_tfs/ct_train_slice{}.tfrecords'.format(0))
+    # print(img.shape, mask.shape)
+    # print(np.mean(img), np.std(img))
+    # print(img.min(), img.max())
+    # img2 = (img - img.min()) * 255 / (img.max() - img.min())
+    # img2 = np.array(img2, dtype=int)
+    # print(img2.min(), img2.max())
 
-    img, mask = read_tf('../../input/PnpAda_release_data/train_n_val/ct_val_tfs/ct_val_slice{}.tfrecords'.format(1))
-    print(img.shape, mask.shape)
-    print(np.mean(img), np.std(img))
-    print(img.min(), img.max())
-    img2 = (img - img.min()) * 255 / (img.max() - img.min())
-    img2 = np.array(img2, dtype=int)
-    print(img2.min(), img2.max())
-    plt.imshow(img2[128 - 112:128 + 112, 128 - 112:128 + 112], cmap='gray')
-    plt.show()
-    plt.imshow(mask[128 - 112:128 + 112, 128 - 112:128 + 112, 0], cmap='gray')
-    plt.show()
+    # img, mask = read_tf('./data/PnpAda_release_data/train_val/ct_val_tfs/ct_val_slice{}.tfrecords'.format(1))
+    # print(img.shape, mask.shape)
+    # print(np.mean(img), np.std(img))
+    # print(img.min(), img.max())
+    # img2 = (img - img.min()) * 255 / (img.max() - img.min())
+    # img2 = np.array(img2, dtype=int)
+    # print(img2.min(), img2.max())

@@ -231,6 +231,11 @@ class DataGenerator_PointNet:
         ids_train_batch = self._data.iloc[self._shuffle_indices[indices]]
 
         for _id in ids_train_batch.values:
+            s_id = _id
+            if "val" in _id:
+                _id = _id[12:-10]
+            else:
+                _id = _id[14:-10]
             img_path, mask_path, vertex_path = self.get_image_paths(id=_id)
             img, mask, vertex = self.get_images_masks(img_path=img_path, mask_path=mask_path, vertex_path=vertex_path)
             if self._match_hist:
