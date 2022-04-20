@@ -9,6 +9,7 @@ from datetime import datetime
 import tqdm
 import numpy as np
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import math
 
 from networks.unet import Segmentation_model_Point
