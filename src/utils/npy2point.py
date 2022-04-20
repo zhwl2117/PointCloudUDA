@@ -45,13 +45,13 @@ def npy2point(folder='ct_train', to_save='v', number_points=300, dim=3, crop_siz
     import mcubes
     crop_from = 128 - crop_size//2
     crop_to = 128 + crop_size//2
-    vertices_fold = os.path.join('../../input/PnpAda_release_data/', folder, 'vertices/')
-    plots_fold = os.path.join('../../input/PnpAda_release_data/', folder, 'plots/')
+    vertices_fold = os.path.join('./data/PnpAda_release_data/', folder, 'vertices/')
+    plots_fold = os.path.join('./data/PnpAda_release_data/', folder, 'plots/')
     if not os.path.exists(vertices_fold):
         os.mkdir(vertices_fold)
     if not os.path.exists(plots_fold):
         os.mkdir(plots_fold)
-    folder_path = os.path.join('../../input/PnpAda_release_data/', folder, "mask/")
+    folder_path = os.path.join('./data/PnpAda_release_data/', folder, "mask/")
     for path in tqdm(glob.glob(folder_path + '*.npy')):
         filename = os.path.splitext(os.path.basename(path))[0]
         vertices_path = os.path.join(vertices_fold, filename + '.npy')
