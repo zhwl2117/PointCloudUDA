@@ -31,7 +31,7 @@ def get_generators(ids_train, ids_valid, ids_train_lge, ids_valid_lge, batch_siz
                                               data_dir=args.data_dir)
     validA_generator = DataGenerator_PointNet(df=ids_valid, channel="channel_first", phase="valid",
                                               batch_size=batch_size, source="source", crop_size=crop_size,
-                                              n_samples=-1, match_hist=mh, ifvert=args.d4 or args.d4au,
+                                              n_samples=-1, match_hist=mh, ifvert=args.d4 or args.d4aux,
                                               data_dir=args.data_dir)
     trainB_generator = DataGenerator_PointNet(df=ids_train_lge, channel="channel_first",
                                               phase="train",batch_size=batch_size, source="target", crop_size=crop_size,
@@ -412,10 +412,10 @@ def print_epoch_result(train_result, valid_result, epoch, max_epochs):
 @timeit
 def main(batch_size=24, n_samples=2000, n_epochs=200):
     max_duration = 24 * 3600 - 60 * 60  # 85800 seconds
-    mr_train = ImageProcessor.split_data(os.path.join(args.data_dir, "mr_train_list.csv"))
-    mr_valid = ImageProcessor.split_data(os.path.join(args.data_dir, "mr_val_list.csv"))
-    ct_train = ImageProcessor.split_data(os.path.join(args.data_dir, 'ct_train_list.csv'))
-    ct_valid = ImageProcessor.split_data(os.path.join(args.data_dir, 'ct_val_list.csv'))
+    mr_train = ImageProcessor.split_data(os.path.join('./input', "mr_train_list.csv"))
+    mr_valid = ImageProcessor.split_data(os.path.join('./input', "mr_val_list.csv"))
+    ct_train = ImageProcessor.split_data(os.path.join('./input', 'ct_train_list.csv'))
+    ct_valid = ImageProcessor.split_data(os.path.join('./input', 'ct_val_list.csv'))
     print("Trainining on {} trainA, {} trainB, validating on {} testA and {} testB samples...!!".format(len(mr_train),
                                                                                                         len(
                                                                                                             ct_train),
@@ -494,7 +494,7 @@ def main(batch_size=24, n_samples=2000, n_epochs=200):
     best_train_result = {}
     best_valid_result = {}
     # create directory for the weights
-    root_directory = '../weights/'
+    root_directory = './weights/'
     if not os.path.exists(root_directory):
         os.mkdir(root_directory)
     weight_dir = root_directory + 'unet_model_checkpoint_{}.pt'.format(appendix)
@@ -824,7 +824,7 @@ if __name__ == '__main__':
     parser.add_argument("-cvinit", help="whether to use constant variance initializer", action='store_true')
     parser.add_argument("-multicuda", help="whether to use two cuda gpus", action='store_true')
     parser.add_argument("-pt", help="whether to load pretrained model", action='store_true')
-    parser.add_argument("-data_dir", help="the directory to the data", type=str, default="../input/")
+    parser.add_argument("-data_dir", help="the directory to the data", type=str, default="./data/")
     # data augmentation:
     parser.add_argument("-aug", help='the type of the augmentation, should be one of "", "heavy" or "light"', type=str, default='')
     parser.add_argument("-mh", help='turn on "histogram matching" (not needed)', action='store_true')
