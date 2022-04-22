@@ -14,10 +14,10 @@ def read_img(pat_id):
     :param pat_id: the id if the patient to read in
     :return: the images and the ground truth
     """
-    assert os.path.exists('../input/PnpAda_release_data/test_ct_image_n_labels/image_ct_{}.nii.gz'.format(pat_id)), "The specified patid doesnot exists: {}".format(pat_id)
-    assert os.path.exists('../input/PnpAda_release_data/test_ct_image_n_labels/gth_ct_{}.nii.gz'.format(pat_id)), "The specified patid doesnot exists: {}".format(pat_id)
-    img, _, _ = load_nii('../input/PnpAda_release_data/test_ct_image_n_labels/image_ct_{}.nii.gz'.format(pat_id))
-    mask, _, _ = load_nii('../input/PnpAda_release_data/test_ct_image_n_labels/gth_ct_{}.nii.gz'.format(pat_id))
+    assert os.path.exists('./data/PnpAda_release_data/test_ct_image_labels/image_ct_{}.nii.gz'.format(pat_id)), "The specified patid doesnot exists: {}".format(pat_id)
+    assert os.path.exists('./data/PnpAda_release_data/test_ct_image_labels/gth_ct_{}.nii.gz'.format(pat_id)), "The specified patid doesnot exists: {}".format(pat_id)
+    img, _, _ = load_nii('./data/PnpAda_release_data/test_ct_image_labels/image_ct_{}.nii.gz'.format(pat_id))
+    mask, _, _ = load_nii('./data/PnpAda_release_data/test_ct_image_labels/gth_ct_{}.nii.gz'.format(pat_id))
     mask = np.array(mask, dtype=np.int)
     axis = 2
     img = np.moveaxis(img, axis, 0)[:, ::-1, ::-1]
