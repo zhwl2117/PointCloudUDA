@@ -29,10 +29,14 @@ def read_tf(tfrecord_path):
 
         label_vol = tf.io.decode_raw(parser['label_vol'], tf.float32)
 
+        #NOTE here, if doesn't work, remove tf.image.resize
         image_raw1 = data_vol.numpy()
         image_raw2 = label_vol.numpy()
         image_raw1 = image_raw1.reshape((256, 256, 3))
-        image_raw2 = np.expand_dims(image_raw2.reshape((256, 256, 3))[..., 0], -1)
+        # image_raw1 = tf.image.resize(image_raw1, (224, 224), method='bicubic')
+        image_raw2 = image_raw2.reshape((256, 256, 3))
+        # image_raw2 = tf.image.resize(image_raw2, (224, 224), method='bicubic')
+        image_raw2 = np.expand_dims(image_raw2[..., 0], -1)
         return image_raw1, image_raw2
 
 def tf_to_numpy(tf_path='../../input/'):

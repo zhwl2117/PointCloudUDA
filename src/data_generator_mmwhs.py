@@ -19,6 +19,7 @@ def augmentation(image, mask=None):
 
     seq = iaa.Sequential(
         [
+            iaa.CropToFixedSize(width=224, height=224),
             iaa.Fliplr(0.5),
             iaa.Flipud(0.2),
             sometimes(iaa.CropAndPad(

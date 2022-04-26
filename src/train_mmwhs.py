@@ -9,7 +9,7 @@ from datetime import datetime
 import tqdm
 import numpy as np
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import math
 
 from networks.unet import Segmentation_model_Point
@@ -847,9 +847,9 @@ if __name__ == '__main__':
     parser.add_argument("-mmt", help="the value of momentum when using sgd", type=float, default=0.95)
     parser.add_argument("-pred1d2", help="whether to use pretrained model d1d2", action='store_true')
     # discriminator setting:
-    parser.add_argument("-d1", help="whether to apply outer space discriminator", action='store_true')
-    parser.add_argument("-d2", help="whether to apply entropy discriminator", action='store_true')
-    parser.add_argument("-d4", help='whether to use pointcloud discriminator', action='store_true')
+    parser.add_argument("-d1", help="whether to apply outer space discriminator", action='store_true', default=True)
+    parser.add_argument("-d2", help="whether to apply entropy discriminator", action='store_true', default=False)
+    parser.add_argument("-d4", help='whether to use pointcloud discriminator', action='store_true', default=False)
     parser.add_argument("-d1lr", help="the learning rate for outer space discriminator", type=float, default=2.5e-5)
     parser.add_argument("-d2lr", help="the learning rate for entropy discriminator", type=float, default=2.5e-5)
     parser.add_argument("-d4lr", help="the learning rate for pointcloud discriminator", type=float, default=2.5e-5)
