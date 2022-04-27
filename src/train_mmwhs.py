@@ -304,7 +304,7 @@ def train_epoch(model_gen, model_dis2, model_dis4, model_dis1=None,
                 d2_acc1.append(np.mean(D_out2))
 
             if args.d1:
-                D_out1 = model_dis1(predS.detach())
+                D_out1 = model_dis1(predS.detach().contiguous())
                 loss_D_same1 = F.binary_cross_entropy_with_logits(D_out1, torch.FloatTensor(D_out1.data.size()).fill_(
                     source_domain_label).cuda())
                 loss_D_same1.backward()
@@ -334,7 +334,7 @@ def train_epoch(model_gen, model_dis2, model_dis4, model_dis1=None,
                 d2_acc2.append(1 - np.mean(D_out2))
 
             if args.d1:
-                D_out1 = model_dis1(predT.detach())
+                D_out1 = model_dis1(predT.detach().contiguous())
                 loss_D_diff1 = F.binary_cross_entropy_with_logits(D_out1, torch.FloatTensor(D_out1.data.size()).fill_(
                     target_domain_label).cuda())
                 loss_D_diff1.backward()
@@ -435,6 +435,7 @@ def main(batch_size=24, n_samples=2000, n_epochs=200):
 
     model_gen = Segmentation_model_Point(filters=args.nf, in_channels=3, pointnet=args.d4 or args.d4aux,
                                          n_class=5, fc_inch=121, heinit=args.he, multicuda=args.multicuda, extpn=args.extpn)
+    model_gen.load_from(args.pretrained_path)
 
     if args.multicuda:
         model_gen.tomulticuda()
@@ -833,7 +834,7 @@ if __name__ == '__main__':
     parser.add_argument("-lr", help="the actual learning rate of the unet", type=float, default=1e-3)
     parser.add_argument("-lr_fix", help="the base learning rate of the unet(used to be written in the 'appendix' string)", type=float, default=1e-3)
     parser.add_argument("-sgd", help="whether to use sgd for the unet", action='store_true')
-    parser.add_argument("-nf", help="base number of the filters for the unet", type=int, default=32)
+    parser.add_argument("-nf", help="base number of the filters for the unet", type=int, default=128)
     parser.add_argument("-d4aux", help="whether to learn point cloud generator (often used to train pointnet when pointcloud discriminator is not applied)", action='store_true')
     parser.add_argument("-out_ch", help="the out channels of the first conv layer(only used for SKUnet) (deprecated)", type=int,
                         default=32)
@@ -872,6 +873,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     assert args.aug == '' or args.aug == 'heavy' or args.aug == 'light'
+    args.pretrained_path = '/home/wlzhong/project/point_cloud_uda/models/swin/swin_base_patch4_window7_224_22k.pth'
 
     appendix = get_appendix()
     print(appendix)

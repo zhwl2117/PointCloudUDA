@@ -6,6 +6,7 @@ import os
 
 from utils.utils import load_nii, keep_largest_connected_components, to_categorical
 from utils.timer import timeit
+from data_generator_mmwhs import test_aug
 
 
 def read_img(pat_id):
@@ -26,7 +27,9 @@ def read_img(pat_id):
     for i in range(img.shape[0]):
         imgs.append(img[[i-1, i, (i+1) % img.shape[0]]])
     masks = to_categorical(mask=mask[:,np.newaxis,...], num_classes=5)
-    return np.array(imgs, dtype=np.float32), masks
+    imgs, masks = np.array(imgs, dtype=np.float32), masks
+    imgs, masks = test_aug(imgs, masks)
+    return imgs, masks
 
 
 def metrics(img_gt, img_pred, ifhd=True, ifasd=True):
@@ -208,7 +211,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-save", help='whether to save the evaluation result', action='store_true')
     parser.add_argument("-model_name", help="the name of the model", type=str, default='d1d2d4')
-    parser.add_argument("-weight_dir", help="the path to the weight", type=str, default='')
+    parser.add_argument("-weight_dir", help="the path to the weight", type=str, default='./weights/best_unet_model_checkpoint_train_point_tf.lr0.0002.nf96.d1lr0.0001.mh.softmax.offdecay.dr1.0.Scr0.411.pt')
 
     args = parser.parse_args()
 
@@ -238,7 +241,7 @@ if __name__ == '__main__':
         toprint += "d4"
         if extpn:
             toprint += '.extpn'
-    unet_model = Segmentation_model_Point(filters=32, in_channels=3, pointnet=pointnet, n_class=5, fc_inch=121, extpn=extpn)
+    unet_model = Segmentation_model_Point(filters=96, in_channels=3, pointnet=pointnet, n_class=5, fc_inch=121, extpn=extpn)
     if 'offaug' in weight_dir:
         toprint += ' | offaug'
     if 'offmh' in weight_dir:

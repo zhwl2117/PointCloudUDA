@@ -90,6 +90,7 @@ def light_aug(images, masks=None, segmap=False):
     sometimes = lambda aug: iaa.Sometimes(0.3, aug)
     seq = iaa.Sequential(
         [
+            iaa.CropToFixedSize(width=224, height=224),
             iaa.Fliplr(0.2),
             iaa.Flipud(0.2),
             sometimes(iaa.Affine(
@@ -121,6 +122,42 @@ def light_aug(images, masks=None, segmap=False):
                 mask_light.append(mask.get_arr())
             masks = np.array(mask_light)
         return image_light, masks
+
+
+def crop_center(img,cropx,cropy):
+    y,x = img.shape[2], img.shape[3]
+    startx = x//2-(cropx//2)
+    starty = y//2-(cropy//2)    
+    return img[:, :, starty:starty+cropy,startx:startx+cropx]
+
+
+def test_aug(images, masks=None, segmap=False):
+
+    seq = iaa.Sequential(
+        [
+            iaa.CropToFixedSize(width=224, height=224),
+        ],
+    )
+    if masks is None:
+        image_light = seq(images=images)
+        return image_light
+    else:
+        if segmap:
+            segmaps = []
+            for mask in masks:
+                segmaps.append(SegmentationMapsOnImage(mask.astype(np.int32), shape=images.shape[-3:]))
+        else:
+            segmaps = np.array(masks, dtype=np.int32)
+        image_light,masks = seq(images=images, segmentation_maps=segmaps)
+        if segmap:
+            mask_light = []
+            for mask in masks:
+                mask_light.append(mask.get_arr())
+            masks = np.array(mask_light)
+        return image_light, masks
+    # images = crop_center(images, 224, 224)
+    # masks = crop_center(masks, 224, 224)
+    # return images, masks
 
 
 class ImageProcessor:
@@ -268,6 +305,8 @@ class DataGenerator_PointNet:
                     except:
                         print('error when converting mask to pointcloud')
                         exit()
+        else:
+            images, masks = test_aug(images, masks)
 
         if self._crop_size:
             images = ImageProcessor.crop_volume(images, crop_size=self._crop_size // 2)

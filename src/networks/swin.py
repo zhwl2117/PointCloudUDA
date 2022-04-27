@@ -637,6 +637,7 @@ class SwinEncoder(nn.Module):
                                downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
                                use_checkpoint=use_checkpoint)
             self.layers.append(layer)
+        self.norm = norm_layer(self.num_features)
 
         self.apply(self._init_weights)
 
@@ -828,7 +829,7 @@ class SwinDecoder(nn.Module):
             x = self.up(x)
             x = x.view(B,4*H,4*W,-1)
             x = x.permute(0,3,1,2) #B,C,H,W
-            x = self.output(x)
+            # x = self.output(x)
             
         return x
 

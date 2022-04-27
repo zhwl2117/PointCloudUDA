@@ -2,7 +2,9 @@ from torch import nn, cat
 from torch import rand
 import torch
 import numpy as np
+import copy
 
+from networks.swin import SwinDecoder, SwinEncoder
 
 class Encoder(nn.Module):
 
@@ -139,9 +141,11 @@ class Decoder(nn.Module):
 class Segmentation_model(nn.Module):
     def __init__(self, filters=32, in_channels=3, n_block=4, bottleneck_depth=4, n_class=4, feature_dis=False):
         super().__init__()
-        self.encoder = Encoder(filters=filters, in_channels=in_channels, n_block=n_block)
+        # self.encoder = Encoder(filters=filters, in_channels=in_channels, n_block=n_block)
+        self.encoder = SwinEncoder()
         self.bottleneck = Bottleneck(filters=filters, n_block=n_block, depth=bottleneck_depth)
-        self.decoder = Decoder(filters=filters, n_block=n_block)
+        # self.decoder = Decoder(filters=filters, n_block=n_block)
+        self.decoder = SwinDecoder()
         self.classifier = nn.Conv2d(in_channels=filters, out_channels=n_class, kernel_size=(1, 1))
         if feature_dis:
             self.classifier2 = nn.Conv2d(in_channels=512, out_channels=n_class, kernel_size=(1, 1))
@@ -170,11 +174,13 @@ class Segmentation_model_Point(nn.Module):
                  fc_inch=81, heinit=False, multicuda=False, extpn=False, batchnorm=True):
         super().__init__()
         self._pointnet = pointnet
-        self.encoder = Encoder(filters=filters, in_channels=in_channels, n_block=n_block, batch_norm=batchnorm)
+        # self.encoder = Encoder(filters=filters, in_channels=in_channels, n_block=n_block, batch_norm=batchnorm)
+        self.encoder = SwinEncoder(embed_dim=128, depths=[2, 2, 18, 2], num_heads=[4, 8, 16, 32])
         self.bottleneck = Bottleneck(filters=filters, n_block=n_block, depth=bottleneck_depth)
         if pointnet:
             self.pointNet = PointNet(num_points=300, fc_inch=fc_inch, conv_inch=512 * filters//32, ext=extpn)
-        self.decoder = Decoder(filters=filters, n_block=n_block, drop=False, batch_norm=batchnorm)
+        # self.decoder = Decoder(filters=filters, n_block=n_block, drop=False, batch_norm=batchnorm)
+        self.decoder = SwinDecoder(embed_dim=128, depths=[2, 2, 18, 2], num_heads=[4, 8, 16, 32])
         self.classifier = nn.Conv2d(in_channels=filters, out_channels=n_class, kernel_size=(1, 1))
         self._initialize_weights(heinit=heinit)
         self._multicuda = multicuda
@@ -207,13 +213,50 @@ class Segmentation_model_Point(nn.Module):
                     if m.bias is not None:
                         m.bias.data.zero_()
 
+    def load_from(self, pretrained_path):
+        if pretrained_path is not None:
+            print("pretrained_path:{}".format(pretrained_path))
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            pretrained_dict = torch.load(pretrained_path, map_location=device)
+            if "model"  not in pretrained_dict:
+                print("---start load pretrained modle by splitting---")
+                pretrained_dict = {k[17:]:v for k,v in pretrained_dict.items()}
+                for k in list(pretrained_dict.keys()):
+                    if "output" in k:
+                        print("delete key:{}".format(k))
+                        del pretrained_dict[k]
+                msg = self.encoder.load_state_dict(pretrained_dict,strict=False)
+                # print(msg)
+                return
+            pretrained_dict = pretrained_dict['model']
+            print("---start load pretrained modle of swin encoder---")
+
+            model_dict = self.encoder.state_dict()
+            full_dict = copy.deepcopy(pretrained_dict)
+            for k, v in pretrained_dict.items():
+                if "layers." in k:
+                    current_layer_num = 3-int(k[7:8])
+                    current_k = "layers_up." + str(current_layer_num) + k[8:]
+                    full_dict.update({current_k:v})
+            for k in list(full_dict.keys()):
+                if k in model_dict:
+                    if full_dict[k].shape != model_dict[k].shape:
+                        print("delete:{};shape pretrain:{};shape model:{}".format(k,v.shape,model_dict[k].shape))
+                        del full_dict[k]
+
+            msg = self.encoder.load_state_dict(full_dict, strict=False)
+            # print(msg)
+        else:
+            print("none pretrain")
+
     def forward(self, x, features_out=True, print_shape=False):
         output, skip = self.encoder(x)
         if self._multicuda:
             output = output.to(self._cuda1)
             for i in range(len(skip)):
                 skip[i] = skip[i].to(self._cuda1)
-        output_bottleneck = self.bottleneck(output)
+        # output_bottleneck = self.bottleneck(output)
+        output_bottleneck = output
         output2 = None
         output_pointNet = None
         if self._pointnet:
@@ -236,7 +279,7 @@ class Segmentation_model_Point(nn.Module):
 if __name__ == '__main__':
     img = rand((2, 3, 224, 224)).cuda()
 
-    model = Segmentation_model_Point(filters=32, n_block=4, pointnet=False or True, fc_inch=121)
+    model = Segmentation_model_Point(filters=96, n_block=4, pointnet=False and True, fc_inch=121)
     output, _, vert = model.cuda().forward(img, print_shape=True)
     print(vert.size())
     input()
